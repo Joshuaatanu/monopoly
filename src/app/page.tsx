@@ -45,6 +45,8 @@ export default function HomePage() {
     isPlayerBankrupt,
     getPlayerOverDebtLimit,
     getLoanEvents,
+    getLoanCollateral,
+    getAvailableCollateralProperties,
     getTotalDebt,
     getTotalInterest,
     getActiveLoansCount,
@@ -84,18 +86,19 @@ export default function HomePage() {
     });
   };
 
-  const handleCreateLoan = (playerId: string, amount: number, interestRate: InterestRate) => {
-    createLoan(playerId, amount, interestRate);
+  const handleCreateLoan = (playerId: string, amount: number, interestRate: InterestRate, collateralPropertyId?: string) => {
+    createLoan(playerId, amount, interestRate, collateralPropertyId);
     const player = getPlayer(playerId);
-    toast.success(`Loan created for ${player?.name}`, {
-      description: `$${amount.toLocaleString()} at ${interestRate}% interest per GO`,
+    const collateralText = collateralPropertyId ? ' (secured)' : '';
+    toast.success(`Loan created for ${player?.name}${collateralText}`, {
+      description: `£${amount.toLocaleString()} at ${interestRate}% interest per GO`,
     });
   };
 
   const handlePayOff = (loanId: string, amount: number) => {
     payOffLoan(loanId, amount);
     toast.success('Payment received', {
-      description: `$${amount.toLocaleString()} paid off`,
+      description: `£${amount.toLocaleString()} paid off`,
     });
   };
 
@@ -213,6 +216,7 @@ export default function HomePage() {
                 loans={loans}
                 getPlayer={getPlayer}
                 getLoanEvents={getLoanEvents}
+                getLoanCollateral={getLoanCollateral}
                 onPayOff={handlePayOff}
               />
             </section>
@@ -234,7 +238,7 @@ export default function HomePage() {
                       key={player.id}
                       player={player}
                       properties={getPlayerProperties(player.id)}
-                      onAddProperty={(name, value) => addProperty(player.id, name, value)}
+                      onAddProperty={(name, value, templateId, colorHex) => addProperty(player.id, name, value, templateId, colorHex)}
                       onRemoveProperty={removeProperty}
                       onToggleMortgage={toggleMortgage}
                       getUnmortgageCost={getUnmortgageCost}
@@ -255,6 +259,7 @@ export default function HomePage() {
         onSubmit={handleCreateLoan}
         currentDebt={loanFormPlayer ? getPlayerDebt(loanFormPlayer.id) : 0}
         debtLimit={loanFormPlayer?.debtLimit || 0}
+        availableCollateral={loanFormPlayer ? getAvailableCollateralProperties(loanFormPlayer.id) : []}
       />
 
       {/* Footer */}

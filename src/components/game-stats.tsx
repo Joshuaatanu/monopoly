@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, DollarSign, FileText, RefreshCw } from 'lucide-react';
+import { TrendingUp, PoundSterling, FileText, RefreshCw } from 'lucide-react';
 
 interface GameStatsProps {
     totalDebt: number;
@@ -19,14 +19,14 @@ export function GameStats({
     const stats = [
         {
             label: 'Total Outstanding',
-            value: `$${totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            icon: DollarSign,
+            value: `£${totalDebt.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            icon: PoundSterling,
             color: 'text-blue-500',
             bgColor: 'bg-blue-500/10',
         },
         {
             label: 'Total Interest',
-            value: `+$${totalInterest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            value: `+£${totalInterest.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
             icon: TrendingUp,
             color: 'text-orange-500',
             bgColor: 'bg-orange-500/10',

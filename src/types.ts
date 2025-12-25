@@ -33,6 +33,7 @@ export interface Loan {
   createdAt: Date;
   passedGoCount: number;
   isPaidOff: boolean;
+  collateralPropertyId?: string; // Optional: property used as collateral
 }
 
 export type LoanEventType = 'created' | 'interest' | 'payment';
@@ -53,6 +54,8 @@ export interface Property {
   value: number;
   isMortgaged: boolean;
   mortgagedAt?: Date;
+  templateId?: string; // Links to MonopolyPropertyTemplate if using predefined
+  colorHex?: string; // Color for display
 }
 
 export interface GameState {

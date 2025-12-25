@@ -176,10 +176,16 @@ export function useGameState() {
     }, []);
 
     // Loan management
-    const createLoan = useCallback((playerId: string, amount: number, interestRate: InterestRate = 10) => {
+    const createLoan = useCallback((playerId: string, amount: number, interestRate: InterestRate = 10, collateralPropertyId?: string) => {
         const loanId = generateId();
         setGameState((prev) => {
             const player = prev.players.find((p) => p.id === playerId);
+            const collateralProperty = collateralPropertyId
+                ? prev.properties.find((p) => p.id === collateralPropertyId)
+                : undefined;
+            const collateralText = collateralProperty
+                ? ` (secured by ${collateralProperty.name})`
+                : ' (unsecured)';
             const newLoan: Loan = {
                 id: loanId,
                 playerId,
@@ -189,6 +195,7 @@ export function useGameState() {
                 createdAt: new Date(),
                 passedGoCount: 0,
                 isPaidOff: false,
+                collateralPropertyId,
             };
             const event: LoanEvent = {
                 id: generateId(),
@@ -196,7 +203,7 @@ export function useGameState() {
                 type: 'created',
                 amount,
                 timestamp: new Date(),
-                description: `Loan created for ${player?.name} at ${interestRate}% interest`,
+                description: `Loan created for ${player?.name} at ${interestRate}% interest${collateralText}`,
             };
             return {
                 ...prev,
@@ -269,7 +276,7 @@ export function useGameState() {
     }, []);
 
     // Property management
-    const addProperty = useCallback((playerId: string, name: string, value: number) => {
+    const addProperty = useCallback((playerId: string, name: string, value: number, templateId?: string, colorHex?: string) => {
         setGameState((prev) => {
             const newProperty: Property = {
                 id: generateId(),
@@ -277,6 +284,8 @@ export function useGameState() {
                 name,
                 value,
                 isMortgaged: false,
+                templateId,
+                colorHex,
             };
             return {
                 ...prev,
@@ -382,6 +391,38 @@ export function useGameState() {
         [gameState.properties]
     );
 
+    // Collateral helpers
+    const getLoanCollateral = useCallback(
+        (loanId: string) => {
+            const loan = gameState.loans.find((l) => l.id === loanId);
+            if (!loan?.collateralPropertyId) return undefined;
+            return gameState.properties.find((p) => p.id === loan.collateralPropertyId);
+        },
+        [gameState.loans, gameState.properties]
+    );
+
+    const getPropertiesUsedAsCollateral = useCallback(
+        () => {
+            const collateralIds = gameState.loans
+                .filter((l) => !l.isPaidOff && l.collateralPropertyId)
+                .map((l) => l.collateralPropertyId);
+            return gameState.properties.filter((p) => collateralIds.includes(p.id));
+        },
+        [gameState.loans, gameState.properties]
+    );
+
+    const getAvailableCollateralProperties = useCallback(
+        (playerId: string) => {
+            const usedCollateralIds = gameState.loans
+                .filter((l) => !l.isPaidOff && l.collateralPropertyId)
+                .map((l) => l.collateralPropertyId);
+            return gameState.properties.filter(
+                (p) => p.playerId === playerId && !usedCollateralIds.includes(p.id) && !p.isMortgaged
+            );
+        },
+        [gameState.loans, gameState.properties]
+    );
+
     // Settings
     const setBankruptcyThreshold = useCallback((threshold: number) => {
         setGameState((prev) => ({
@@ -457,6 +498,10 @@ export function useGameState() {
         getTotalDebt,
         getTotalInterest,
         getActiveLoansCount,
+        // Collateral
+        getLoanCollateral,
+        getPropertiesUsedAsCollateral,
+        getAvailableCollateralProperties,
         // Settings
         setBankruptcyThreshold,
         // Game

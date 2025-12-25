@@ -36,7 +36,7 @@ export function LoanHistory({ events, open, onOpenChange, loanAmount }: LoanHist
                         📋 Loan History
                         {loanAmount !== undefined && (
                             <Badge variant="outline">
-                                Current: ${loanAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                Current: £{loanAmount.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
                             </Badge>
                         )}
                     </DialogTitle>
@@ -66,8 +66,8 @@ export function LoanHistory({ events, open, onOpenChange, loanAmount }: LoanHist
                                             </div>
                                             <p className="text-sm mt-1">{event.description}</p>
                                             <p className="text-lg font-mono font-bold mt-1">
-                                                {event.type === 'payment' ? '-' : '+'}$
-                                                {event.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                                                {event.type === 'payment' ? '-' : '+'}£
+                                                {event.amount.toLocaleString('en-GB', { minimumFractionDigits: 2 })}
                                             </p>
                                         </div>
                                     </div>

@@ -80,12 +80,12 @@ export function TurnTracker({ players, onNextTurn, onSetTurn }: TurnTrackerProps
                                 key={player.id}
                                 onClick={() => onSetTurn(player.id)}
                                 className={`w-3 h-3 rounded-full transition-all ${player.isCurrentTurn
-                                        ? 'scale-125 ring-2 ring-offset-2 ring-offset-background'
-                                        : 'opacity-50 hover:opacity-100'
+                                    ? 'scale-125 ring-2 ring-offset-2 ring-offset-background ring-current'
+                                    : 'opacity-50 hover:opacity-100'
                                     }`}
                                 style={{
                                     backgroundColor: player.color,
-                                    ringColor: player.color,
+                                    color: player.color,
                                 }}
                                 title={player.name}
                             />

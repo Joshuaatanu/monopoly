@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Player, Loan, LoanEvent } from '@/types';
+import { Player, Loan, LoanEvent, Property } from '@/types';
 import {
     Table,
     TableBody,
@@ -22,16 +22,17 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { LoanHistory } from './loan-history';
-import { History } from 'lucide-react';
+import { History, Shield, ShieldOff } from 'lucide-react';
 
 interface LoanTableProps {
     loans: Loan[];
     getPlayer: (playerId: string) => Player | undefined;
     getLoanEvents: (loanId: string) => LoanEvent[];
+    getLoanCollateral: (loanId: string) => Property | undefined;
     onPayOff: (loanId: string, amount: number) => void;
 }
 
-export function LoanTable({ loans, getPlayer, getLoanEvents, onPayOff }: LoanTableProps) {
+export function LoanTable({ loans, getPlayer, getLoanEvents, getLoanCollateral, onPayOff }: LoanTableProps) {
     const [payingLoan, setPayingLoan] = useState<Loan | null>(null);
     const [payAmount, setPayAmount] = useState('');
     const [historyLoan, setHistoryLoan] = useState<Loan | null>(null);
@@ -72,6 +73,7 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, onPayOff }: LoanTab
                             <TableHead className="text-center">Rate</TableHead>
                             <TableHead className="text-center">Pass GO</TableHead>
                             <TableHead className="text-right">Interest</TableHead>
+                            <TableHead>Collateral</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -80,6 +82,7 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, onPayOff }: LoanTab
                         {loans.map((loan) => {
                             const player = getPlayer(loan.playerId);
                             const interest = loan.currentAmount - loan.initialAmount;
+                            const collateral = getLoanCollateral(loan.id);
                             return (
                                 <TableRow key={loan.id} className={loan.isPaidOff ? 'opacity-50' : ''}>
                                     <TableCell>
@@ -92,10 +95,10 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, onPayOff }: LoanTab
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right font-mono">
-                                        ${loan.initialAmount.toLocaleString()}
+                                        £{loan.initialAmount.toLocaleString()}
                                     </TableCell>
                                     <TableCell className="text-right font-mono font-bold">
-                                        ${loan.currentAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        £{loan.currentAmount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </TableCell>
                                     <TableCell className="text-center">
                                         <Badge variant="outline" className={
@@ -110,7 +113,30 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, onPayOff }: LoanTab
                                         <Badge variant="outline">{loan.passedGoCount}x</Badge>
                                     </TableCell>
                                     <TableCell className="text-right font-mono text-orange-500">
-                                        +${interest.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        +£{interest.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </TableCell>
+                                    <TableCell>
+                                        {collateral ? (
+                                            <div className="flex items-center gap-1.5">
+                                                <Shield className="h-3 w-3 text-green-500" />
+                                                <div className="flex items-center gap-1">
+                                                    {collateral.colorHex && (
+                                                        <div
+                                                            className="w-2 h-2 rounded-full"
+                                                            style={{ backgroundColor: collateral.colorHex }}
+                                                        />
+                                                    )}
+                                                    <span className="text-xs truncate max-w-20" title={collateral.name}>
+                                                        {collateral.name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-1 text-muted-foreground">
+                                                <ShieldOff className="h-3 w-3" />
+                                                <span className="text-xs">Unsecured</span>
+                                            </div>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={loan.isPaidOff ? 'secondary' : 'destructive'}>
@@ -155,14 +181,14 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, onPayOff }: LoanTab
                     <DialogHeader>
                         <DialogTitle>Pay Off Loan</DialogTitle>
                         <DialogDescription>
-                            Current balance: ${payingLoan?.currentAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            Current balance: £{payingLoan?.currentAmount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="flex gap-2">
                             <div className="relative flex-1">
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                                    $
+                                    £
                                 </span>
                                 <CurrencyInput
                                     placeholder="Amount to pay"
@@ -176,6 +202,14 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, onPayOff }: LoanTab
                                 Pay Full
                             </Button>
                         </div>
+                        {payingLoan?.collateralPropertyId && (
+                            <div className="text-sm text-muted-foreground p-2 rounded bg-green-500/10 border border-green-500/30">
+                                <div className="flex items-center gap-2">
+                                    <Shield className="h-3 w-3 text-green-500" />
+                                    <span>Paying off this loan will release the collateral</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setPayingLoan(null)}>
@@ -185,7 +219,7 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, onPayOff }: LoanTab
                             onClick={handlePaySubmit}
                             disabled={!payAmount || parseFloat(payAmount) <= 0}
                         >
-                            Pay ${payAmount || '0'}
+                            Pay £{payAmount || '0'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

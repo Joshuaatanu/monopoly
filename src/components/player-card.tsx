@@ -135,14 +135,14 @@ export function PlayerCard({
                             className={`text-xl font-bold ${isBankrupt ? 'text-destructive' : ''}`}
                             style={{ color: isBankrupt ? undefined : player.color }}
                         >
-                            ${totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            £{totalDebt.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                     </div>
                     {player.debtLimit > 0 && (
                         <div className="flex items-center justify-between text-xs">
                             <span className="text-muted-foreground">Limit</span>
                             <span className={isOverDebtLimit ? 'text-orange-500' : ''}>
-                                ${player.debtLimit.toLocaleString()}
+                                £{player.debtLimit.toLocaleString()}
                             </span>
                         </div>
                     )}
@@ -181,8 +181,8 @@ export function PlayerCard({
                                             key={piece.piece}
                                             onClick={() => onUpdateAvatar(piece.piece)}
                                             className={`text-2xl p-2 rounded-lg border transition-all ${player.avatar === piece.piece
-                                                    ? 'border-primary bg-primary/10 scale-110'
-                                                    : 'border-muted hover:border-primary/50'
+                                                ? 'border-primary bg-primary/10 scale-110'
+                                                : 'border-muted hover:border-primary/50'
                                                 }`}
                                             title={piece.label}
                                         >
@@ -194,7 +194,7 @@ export function PlayerCard({
                             <div>
                                 <label className="text-sm font-medium mb-2 block">Notes</label>
                                 <Textarea
-                                    placeholder="e.g., Owns Boardwalk, needs $200"
+                                    placeholder="e.g., Owns Mayfair, needs £200"
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
                                     rows={3}
