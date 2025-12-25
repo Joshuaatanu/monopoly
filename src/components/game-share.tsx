@@ -29,15 +29,23 @@ export function GameShare({ exportState, importState }: GameShareProps) {
     const [copied, setCopied] = useState(false);
 
     const compressedState = LZString.compressToEncodedURIComponent(exportState());
-    const shareUrl = typeof window !== 'undefined'
+    const editUrl = typeof window !== 'undefined'
         ? `${window.location.origin}${window.location.pathname}?state=${compressedState}`
         : '';
+    const viewUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}${window.location.pathname}?state=${compressedState}&mode=view`
+        : '';
 
-    const handleCopyUrl = () => {
-        navigator.clipboard.writeText(shareUrl);
+    const handleCopyEditUrl = () => {
+        navigator.clipboard.writeText(editUrl);
         setCopied(true);
-        toast.success('Share URL copied to clipboard!');
+        toast.success('Edit URL copied to clipboard!');
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleCopyViewUrl = () => {
+        navigator.clipboard.writeText(viewUrl);
+        toast.success('View-only URL copied to clipboard!');
     };
 
     const handleCopyJson = () => {
@@ -124,32 +132,38 @@ export function GameShare({ exportState, importState }: GameShareProps) {
                     <TabsContent value="share" className="space-y-4">
                         <div className="flex justify-center p-4 bg-white rounded-lg">
                             <QRCodeSVG
-                                value={shareUrl}
+                                value={viewUrl}
                                 size={200}
                                 level="M"
                                 includeMargin
                             />
                         </div>
                         <p className="text-sm text-center text-muted-foreground">
-                            Scan this QR code to load the current game state
+                            Scan this QR code to view the current game state (read-only)
                         </p>
-                        <div className="flex gap-2">
-                            <Button className="flex-1" onClick={handleCopyUrl}>
+                        <div className="flex flex-col gap-2">
+                            <Button className="w-full" onClick={handleCopyViewUrl}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy View-Only Link
+                            </Button>
+                            <Button variant="outline" className="w-full" onClick={handleCopyEditUrl}>
                                 {copied ? (
                                     <Check className="h-4 w-4 mr-2" />
                                 ) : (
                                     <Copy className="h-4 w-4 mr-2" />
                                 )}
-                                {copied ? 'Copied!' : 'Copy Link'}
+                                {copied ? 'Copied!' : 'Copy Edit Link'}
                             </Button>
+                        </div>
+                        <div className="flex gap-2">
                             <Button variant="outline" className="flex-1" onClick={handleDownload}>
                                 <Download className="h-4 w-4 mr-2" />
                                 Download
                             </Button>
+                            <Button variant="ghost" className="flex-1 text-sm" onClick={handleCopyJson}>
+                                Copy JSON
+                            </Button>
                         </div>
-                        <Button variant="ghost" className="w-full text-sm" onClick={handleCopyJson}>
-                            Copy raw JSON data
-                        </Button>
                     </TabsContent>
 
                     <TabsContent value="import" className="space-y-4">

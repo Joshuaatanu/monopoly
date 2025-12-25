@@ -11,6 +11,7 @@ import { AddPlayerDialog } from '@/components/add-player-dialog';
 import { TurnTracker } from '@/components/turn-tracker';
 import { PropertyManager } from '@/components/property-manager';
 import { GameShare } from '@/components/game-share';
+import { SettingsDialog } from '@/components/settings-dialog';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RotateCcw, Home, CreditCard } from 'lucide-react';
@@ -50,6 +51,7 @@ export default function HomePage() {
     getTotalDebt,
     getTotalInterest,
     getActiveLoansCount,
+    setBankruptcyThreshold,
     resetGame,
     exportState,
     importState,
@@ -57,18 +59,31 @@ export default function HomePage() {
 
   const [loanFormPlayer, setLoanFormPlayer] = useState<Player | null>(null);
   const [selectedPlayerForProperties, setSelectedPlayerForProperties] = useState<string | null>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
 
   // Check URL for shared state on load
   useEffect(() => {
     if (typeof window !== 'undefined' && isLoaded) {
       const params = new URLSearchParams(window.location.search);
       const stateParam = params.get('state');
+      const modeParam = params.get('mode');
+
       if (stateParam) {
         const decompressed = LZString.decompressFromEncodedURIComponent(stateParam);
         if (decompressed) {
           const success = importState(decompressed);
           if (success) {
-            toast.success('Game loaded from shared link!');
+            const isViewMode = modeParam === 'view';
+            setIsReadOnly(isViewMode);
+
+            if (isViewMode) {
+              toast.success('Game loaded in view-only mode', {
+                description: 'You can view but not edit this game',
+              });
+            } else {
+              toast.success('Game loaded from shared link!');
+            }
+
             // Clear URL params
             window.history.replaceState({}, '', window.location.pathname);
           }
@@ -137,19 +152,57 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <GameShare exportState={exportState} importState={importState} />
-              <AddPlayerDialog onAddPlayer={addPlayer} />
-              <Button variant="outline" size="icon" onClick={handleResetGame} title="Reset Game">
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+              {!isReadOnly && <GameShare exportState={exportState} importState={importState} />}
+              {!isReadOnly && (
+                <SettingsDialog
+                  bankruptcyThreshold={bankruptcyThreshold}
+                  onBankruptcyThresholdChange={setBankruptcyThreshold}
+                />
+              )}
+              {!isReadOnly && <AddPlayerDialog onAddPlayer={addPlayer} />}
+              {!isReadOnly && (
+                <Button variant="outline" size="icon" onClick={handleResetGame} title="Reset Game">
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
       </header>
 
+      {/* Read-Only Banner */}
+      {isReadOnly && (
+        <div className="bg-amber-500/20 border-y border-amber-500/50 backdrop-blur-sm">
+          <div className="container mx-auto px-4 py-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 text-amber-400">
+                <span className="text-lg">👁️</span>
+                <div>
+                  <p className="font-semibold text-sm sm:text-base">View-Only Mode</p>
+                  <p className="text-xs text-amber-300/80">
+                    You are viewing a shared game. Changes cannot be made in this mode.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setIsReadOnly(false);
+                  toast.success('Edit mode enabled');
+                }}
+                className="border-amber-500/50 hover:bg-amber-500/20"
+              >
+                Enable Editing
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="container mx-auto px-4 py-4 sm:py-8 space-y-6">
         {/* Turn Tracker */}
-        {players.length > 0 && (
+        {players.length > 0 && !isReadOnly && (
           <TurnTracker
             players={players}
             onNextTurn={nextTurn}
@@ -181,11 +234,11 @@ export default function HomePage() {
                   key={player.id}
                   player={player}
                   loans={getPlayerLoans(player.id)}
-                  onRemove={() => removePlayer(player.id)}
-                  onCreateLoan={() => setLoanFormPlayer(player)}
-                  onPassGo={() => handlePassGo(player.id)}
-                  onUpdateNotes={(notes) => updatePlayerNotes(player.id, notes)}
-                  onUpdateAvatar={(avatar) => updatePlayerAvatar(player.id, avatar)}
+                  onRemove={isReadOnly ? undefined : () => removePlayer(player.id)}
+                  onCreateLoan={isReadOnly ? undefined : () => setLoanFormPlayer(player)}
+                  onPassGo={isReadOnly ? undefined : () => handlePassGo(player.id)}
+                  onUpdateNotes={isReadOnly ? undefined : (notes) => updatePlayerNotes(player.id, notes)}
+                  onUpdateAvatar={isReadOnly ? undefined : (avatar) => updatePlayerAvatar(player.id, avatar)}
                   isOverDebtLimit={getPlayerOverDebtLimit(player.id)}
                   isBankrupt={isPlayerBankrupt(player.id)}
                 />
@@ -217,7 +270,7 @@ export default function HomePage() {
                 getPlayer={getPlayer}
                 getLoanEvents={getLoanEvents}
                 getLoanCollateral={getLoanCollateral}
-                onPayOff={handlePayOff}
+                onPayOff={isReadOnly ? undefined : handlePayOff}
               />
             </section>
           </TabsContent>
@@ -238,9 +291,9 @@ export default function HomePage() {
                       key={player.id}
                       player={player}
                       properties={getPlayerProperties(player.id)}
-                      onAddProperty={(name, value, templateId, colorHex) => addProperty(player.id, name, value, templateId, colorHex)}
-                      onRemoveProperty={removeProperty}
-                      onToggleMortgage={toggleMortgage}
+                      onAddProperty={isReadOnly ? undefined : (name, value, templateId, colorHex) => addProperty(player.id, name, value, templateId, colorHex)}
+                      onRemoveProperty={isReadOnly ? undefined : removeProperty}
+                      onToggleMortgage={isReadOnly ? undefined : toggleMortgage}
                       getUnmortgageCost={getUnmortgageCost}
                     />
                   ))}

@@ -24,11 +24,11 @@ import { X, Settings, AlertTriangle } from 'lucide-react';
 interface PlayerCardProps {
     player: Player;
     loans: Loan[];
-    onRemove: () => void;
-    onCreateLoan: () => void;
-    onPassGo: () => void;
-    onUpdateNotes: (notes: string) => void;
-    onUpdateAvatar: (avatar: MonopolyPiece) => void;
+    onRemove?: () => void;
+    onCreateLoan?: () => void;
+    onPassGo?: () => void;
+    onUpdateNotes?: (notes: string) => void;
+    onUpdateAvatar?: (avatar: MonopolyPiece) => void;
     isOverDebtLimit?: boolean;
     isBankrupt?: boolean;
 }
@@ -53,9 +53,11 @@ export function PlayerCard({
     const avatarEmoji = MONOPOLY_PIECES.find((p) => p.piece === player.avatar)?.emoji || '🎮';
 
     const handleSaveSettings = () => {
-        onUpdateNotes(notes);
+        onUpdateNotes?.(notes);
         setSettingsOpen(false);
     };
+
+    const isReadOnly = !onRemove && !onCreateLoan && !onPassGo && !onUpdateNotes && !onUpdateAvatar;
 
     return (
         <TooltipProvider>
@@ -109,22 +111,26 @@ export function PlayerCard({
                                     </TooltipContent>
                                 </Tooltip>
                             )}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={() => setSettingsOpen(true)}
-                            >
-                                <Settings className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 hover:bg-destructive/20"
-                                onClick={onRemove}
-                            >
-                                <X className="h-4 w-4" />
-                            </Button>
+                            {!isReadOnly && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => setSettingsOpen(true)}
+                                >
+                                    <Settings className="h-4 w-4" />
+                                </Button>
+                            )}
+                            {onRemove && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 hover:bg-destructive/20"
+                                    onClick={onRemove}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </CardHeader>
@@ -152,18 +158,24 @@ export function PlayerCard({
                             {activeLoans.length}
                         </Badge>
                     </div>
-                    <div className="flex gap-2 mt-2">
-                        <Button className="flex-1" variant="outline" onClick={onCreateLoan}>
-                            + Loan
-                        </Button>
-                        <Button
-                            className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
-                            onClick={onPassGo}
-                            disabled={activeLoans.length === 0}
-                        >
-                            🎲 Pass GO
-                        </Button>
-                    </div>
+                    {!isReadOnly && (
+                        <div className="flex gap-2 mt-2">
+                            {onCreateLoan && (
+                                <Button className="flex-1" variant="outline" onClick={onCreateLoan}>
+                                    + Loan
+                                </Button>
+                            )}
+                            {onPassGo && (
+                                <Button
+                                    className="flex-1 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                                    onClick={onPassGo}
+                                    disabled={activeLoans.length === 0}
+                                >
+                                    🎲 Pass GO
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </CardContent>
 
                 {/* Settings Dialog */}
@@ -173,33 +185,37 @@ export function PlayerCard({
                             <DialogTitle>Player Settings - {player.name}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
-                            <div>
-                                <label className="text-sm font-medium mb-2 block">Avatar</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {MONOPOLY_PIECES.map((piece) => (
-                                        <button
-                                            key={piece.piece}
-                                            onClick={() => onUpdateAvatar(piece.piece)}
-                                            className={`text-2xl p-2 rounded-lg border transition-all ${player.avatar === piece.piece
-                                                ? 'border-primary bg-primary/10 scale-110'
-                                                : 'border-muted hover:border-primary/50'
-                                                }`}
-                                            title={piece.label}
-                                        >
-                                            {piece.emoji}
-                                        </button>
-                                    ))}
+                            {onUpdateAvatar && (
+                                <div>
+                                    <label className="text-sm font-medium mb-2 block">Avatar</label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {MONOPOLY_PIECES.map((piece) => (
+                                            <button
+                                                key={piece.piece}
+                                                onClick={() => onUpdateAvatar(piece.piece)}
+                                                className={`text-2xl p-2 rounded-lg border transition-all ${player.avatar === piece.piece
+                                                    ? 'border-primary bg-primary/10 scale-110'
+                                                    : 'border-muted hover:border-primary/50'
+                                                    }`}
+                                                title={piece.label}
+                                            >
+                                                {piece.emoji}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium mb-2 block">Notes</label>
-                                <Textarea
-                                    placeholder="e.g., Owns Mayfair, needs £200"
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    rows={3}
-                                />
-                            </div>
+                            )}
+                            {onUpdateNotes && (
+                                <div>
+                                    <label className="text-sm font-medium mb-2 block">Notes</label>
+                                    <Textarea
+                                        placeholder="e.g., Owns Mayfair, needs £200"
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        rows={3}
+                                    />
+                                </div>
+                            )}
                         </div>
                         <DialogFooter>
                             <Button variant="outline" onClick={() => setSettingsOpen(false)}>

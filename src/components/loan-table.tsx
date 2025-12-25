@@ -29,7 +29,7 @@ interface LoanTableProps {
     getPlayer: (playerId: string) => Player | undefined;
     getLoanEvents: (loanId: string) => LoanEvent[];
     getLoanCollateral: (loanId: string) => Property | undefined;
-    onPayOff: (loanId: string, amount: number) => void;
+    onPayOff?: (loanId: string, amount: number) => void;
 }
 
 export function LoanTable({ loans, getPlayer, getLoanEvents, getLoanCollateral, onPayOff }: LoanTableProps) {
@@ -38,7 +38,7 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, getLoanCollateral, 
     const [historyLoan, setHistoryLoan] = useState<Loan | null>(null);
 
     const handlePaySubmit = () => {
-        if (payingLoan && payAmount) {
+        if (payingLoan && payAmount && onPayOff) {
             onPayOff(payingLoan.id, parseFloat(payAmount));
             setPayingLoan(null);
             setPayAmount('');
@@ -46,7 +46,7 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, getLoanCollateral, 
     };
 
     const handlePayFull = () => {
-        if (payingLoan) {
+        if (payingLoan && onPayOff) {
             onPayOff(payingLoan.id, payingLoan.currentAmount);
             setPayingLoan(null);
             setPayAmount('');
@@ -154,7 +154,7 @@ export function LoanTable({ loans, getPlayer, getLoanEvents, getLoanCollateral, 
                                             >
                                                 <History className="h-4 w-4" />
                                             </Button>
-                                            {!loan.isPaidOff && (
+                                            {!loan.isPaidOff && onPayOff && (
                                                 <Button
                                                     size="sm"
                                                     variant="outline"

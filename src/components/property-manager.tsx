@@ -28,9 +28,9 @@ import { Home, X, Lock, Unlock, Search } from 'lucide-react';
 interface PropertyManagerProps {
     player: Player;
     properties: Property[];
-    onAddProperty: (name: string, value: number, templateId?: string, colorHex?: string) => void;
-    onRemoveProperty: (propertyId: string) => void;
-    onToggleMortgage: (propertyId: string) => void;
+    onAddProperty?: (name: string, value: number, templateId?: string, colorHex?: string) => void;
+    onRemoveProperty?: (propertyId: string) => void;
+    onToggleMortgage?: (propertyId: string) => void;
     getUnmortgageCost: (propertyId: string) => number;
 }
 
@@ -49,7 +49,7 @@ export function PropertyManager({
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleAdd = () => {
-        if (newName && newValue) {
+        if (newName && newValue && onAddProperty) {
             onAddProperty(
                 newName,
                 parseFloat(newValue),
@@ -59,6 +59,8 @@ export function PropertyManager({
             resetForm();
         }
     };
+
+    const isReadOnly = !onAddProperty && !onRemoveProperty && !onToggleMortgage;
 
     const resetForm = () => {
         setNewName('');
@@ -100,9 +102,11 @@ export function PropertyManager({
                             <Home className="h-4 w-4" />
                             Properties
                         </CardTitle>
-                        <Button size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
-                            + Add
-                        </Button>
+                        {onAddProperty && (
+                            <Button size="sm" variant="outline" onClick={() => setAddDialogOpen(true)}>
+                                + Add
+                            </Button>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent>
@@ -142,29 +146,35 @@ export function PropertyManager({
                                             )}
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8"
-                                            onClick={() => onToggleMortgage(property.id)}
-                                            title={property.isMortgaged ? 'Unmortgage' : 'Mortgage'}
-                                        >
-                                            {property.isMortgaged ? (
-                                                <Unlock className="h-4 w-4 text-green-500" />
-                                            ) : (
-                                                <Lock className="h-4 w-4 text-orange-500" />
+                                    {!isReadOnly && (
+                                        <div className="flex items-center gap-1">
+                                            {onToggleMortgage && (
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-8 w-8"
+                                                    onClick={() => onToggleMortgage(property.id)}
+                                                    title={property.isMortgaged ? 'Unmortgage' : 'Mortgage'}
+                                                >
+                                                    {property.isMortgaged ? (
+                                                        <Unlock className="h-4 w-4 text-green-500" />
+                                                    ) : (
+                                                        <Lock className="h-4 w-4 text-orange-500" />
+                                                    )}
+                                                </Button>
                                             )}
-                                        </Button>
-                                        <Button
-                                            size="icon"
-                                            variant="ghost"
-                                            className="h-8 w-8 hover:bg-destructive/20"
-                                            onClick={() => onRemoveProperty(property.id)}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                            {onRemoveProperty && (
+                                                <Button
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 hover:bg-destructive/20"
+                                                    onClick={() => onRemoveProperty(property.id)}
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                             {mortgagedValue > 0 && (
